@@ -877,6 +877,30 @@ YAML
       assert Bukkits::Engine.config.bukkits_seeds_loaded
     end
 
+    test "loads multiple seed data paths" do
+      @plugin.write "db/seeds.rb", <<-RUBY
+        Bukkits::Engine.config.bukkits_seeds_loaded = true
+      RUBY
+
+      @plugin.write "db/seeds_two.rb", <<-RUBY
+        Bukkits::Engine.config.bukkits_seeds_two_loaded = true
+      RUBY
+
+      @plugin.write "lib/bukkits.rb", <<-RUBY
+        module Bukkits
+          class Engine < ::Rails::Engine
+            config.paths["db/seeds.rb"].push "#{@plugin.path}/db/seeds_two.rb"
+          end
+        end
+      RUBY
+
+      boot_rails
+
+      Bukkis::Engine.load_seed
+      assert Bukkits::Engine.config.bukkits_seeds_loaded
+      assert Bukkits::Engine.config.bukkits_seeds_two_loaded
+    end
+
     test "skips nonexistent seed data" do
       FileUtils.rm "#{app_path}/db/seeds.rb"
       boot_rails
